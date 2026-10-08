@@ -1,0 +1,108 @@
+<%#
+ Padavan 重写版 - 系统状态页（M4）
+ 布局对齐老毛子首屏：负载 / CPU / 内存 / 运行时长 + 接口状态，
+ CPU 占用按两次采样差值在浏览器端计算（同 state.js 的 setSystemInfo 语义）。
+-%>
+
+<%+header%>
+
+<h2 name="content"><%:Padavan%> - <%:系统状态%></h2>
+
+<script type="text/javascript">
+//<![CDATA[
+var pv_prev = null;
+
+function pv_bytes(kb, precision) {
+	var n = (kb || 0) * 1024;
+	var u = ['B', 'KB', 'MB', 'GB', 'TB'], i = 0;
+	while (n >= 1024 && i < u.length - 1) { n /= 1024; i++; }
+	return n.toFixed(precision === undefined ? 2 : precision) + ' ' + u[i];
+}
+
+function pv_uptime(u) {
+	if (!u) return '--';
+	return u.days + '<%:天%> ' +
+		(u.hours < 10 ? '0' : '') + u.hours + ':' +
+		(u.minutes < 10 ? '0' : '') + u.minutes;
+}
+
+function pv_render(data) {
+	var cpu = data.data.cpu, ram = data.data.ram;
+
+	var busy = 0;
+	if (pv_prev && cpu.total > pv_prev.total) {
+		var dt = cpu.total - pv_prev.total;
+		busy = Math.round((cpu.busy - pv_prev.busy) * 100 / dt);
+		if (busy < 0) busy = 0;
+		if (busy > 100) busy = 100;
+	}
+	pv_prev = cpu;
+
+	document.getElementById('pv_host').innerHTML = data.hostname || '--';
+	document.getElementById('pv_product').innerHTML = data.productid || '--';
+	document.getElementById('pv_la').innerHTML = data.data.lavg;
+	document.getElementById('pv_cpu').innerHTML = busy + ' %';
+	document.getElementById('pv_mem').innerHTML =
+		pv_bytes(ram.total - ram.used) + ' / ' + pv_bytes(ram.total);
+	document.getElementById('pv_uptime').innerHTML = pv_uptime(data.data.uptime);
+
+	var sw = data.data.swap || { total: 0, used: 0 };
+	document.getElementById('pv_swap').innerHTML =
+		pv_bytes(sw.used) + ' / ' + pv_bytes(sw.total);
+
+	var html = '';
+	var list = data.data.interfaces || [];
+	for (var i = 0; i < list.length; i++) {
+		var it = list[i];
+		var ip = it.wireless ? (it.ssid || '') :
+			(it.address ? (it.address + (it.mask ? '/' + it.mask : '')) : '--');
+		html += '<tr><td>' + (it.name || '') + '</td>' +
+			'<td>' + (it.up ? '<%:已连接%>' : '<%:未连接%>') + '</td>' +
+			'<td>' + (it.proto || '--') + '</td>' +
+			'<td>' + ip + '</td></tr>';
+	}
+	document.getElementById('pv_ifaces').innerHTML =
+		html || '<tr><td colspan="4"><%:暂无接口信息%></td></tr>';
+}
+
+XHR.poll(2, '<%=url("admin/padavan/status_data")%>', null, function(x, data) {
+	if (data && data.data) pv_render(data);
+});
+//]]>
+</script>
+
+<div class="cbi-map">
+	<div class="cbi-section">
+		<h3><%:系统概况%></h3>
+		<table class="table">
+			<tr><td width="30%"><%:主机名%></td><td id="pv_host"><%=hostname%></td></tr>
+			<tr><td><%:产品型号%></td><td id="pv_product"><%=productid%></td></tr>
+			<tr><td><%:系统负载%></td><td id="pv_la"><%=data.lavg%></td></tr>
+			<tr><td><%:CPU 占用%></td><td id="pv_cpu">-- %</td></tr>
+			<tr><td><%:空闲内存%></td><td id="pv_mem">-- / --</td></tr>
+			<tr><td><%:Swap 使用%></td><td id="pv_swap">-- / --</td></tr>
+			<tr><td><%:运行时长%></td><td id="pv_uptime"><%=data.uptime.days%> <%:天%> <%=data.uptime.hours%>:<%=string.format("%02d", data.uptime.minutes)%></td></tr>
+			<tr><td><%:时区%></td><td><%=timezone%></td></tr>
+		</table>
+	</div>
+
+	<div class="cbi-section">
+		<h3><%:接口状态%></h3>
+		<table class="table">
+			<tr>
+				<th><%:接口%></th>
+				<th><%:状态%></th>
+				<th><%:协议%></th>
+				<th><%:地址 / SSID%></th>
+			</tr>
+			<tbody id="pv_ifaces">
+				<tr><td colspan="4"><%:加载中…%></td></tr>
+			</tbody>
+		</table>
+		<div class="cbi-section-create">
+			<input type="button" class="cbi-button cbi-button-action" value="<%:刷新%>" onclick="XHR.get('<%=url("admin/padavan/status_data")%>', null, function(x, d){ if (d && d.data) pv_render(d); });" />
+		</div>
+	</div>
+</div>
+
+<%+footer%>

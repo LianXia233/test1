@@ -1,0 +1,71 @@
+# /etc/config/padavan - Padavan 重写版默认配置（M4）
+#
+# 段名严格遵循 libnvram 的映射规则（见 libnvram/src/nvram_uci_cli.c 的 name_to_path）：
+#     nvram 名 section_key  ->  padavan.section.key
+#     nvram 名 无下划线     ->  padavan.misc.<name>
+# 因此段名 = nvram 名第一个下划线之前的 token：
+#     lan_ipaddr   -> padavan.lan.ipaddr
+#     wan_proto    -> padavan.wan.proto
+#     dhcp_start   -> padavan.dhcp.start
+#     rt_ssid      -> padavan.rt.ssid      (2.4GHz)
+#     wl_ssid      -> padavan.wl.ssid      (5GHz)
+#     hostname     -> padavan.misc.hostname
+#
+# 老毛子应用执行 `nvram get lan_ipaddr` 即可读到这里配置，无需改代码。
+
+config misc 'misc'
+	option productid 'Padavan-MT798x'
+	option hostname 'Padavan'
+	option timezone 'CST-8'
+
+config wan 'wan'
+	option proto 'dhcp'
+	option ipaddr ''
+	option netmask ''
+	option gateway ''
+	option dnsenable '1'
+	option dns1 ''
+	option dns2 ''
+	option pppoe_username ''
+	option pppoe_passwd ''
+	option pppoe_idletime '0'
+	option mtu '1500'
+	option hostname ''
+	option hwaddr ''
+
+config lan 'lan'
+	option ipaddr '192.168.31.1'
+	option netmask '255.255.255.0'
+	option stp '1'
+
+config dhcp 'dhcp'
+	option enable '1'
+	option start '192.168.31.100'
+	option end '192.168.31.200'
+	option lease '86400'
+
+config rt 'rt'
+	option radio '1'
+	option ssid 'Padavan-2.4G'
+	option closed '0'
+	option auth_mode 'psk'
+	option wpa_mode '2'
+	option crypto 'aes'
+	option wpa_psk ''
+	option channel '0'
+	option gmode '4'
+	option HT_BW '1'
+	option TxPower '100'
+
+config wl 'wl'
+	option radio '1'
+	option ssid 'Padavan-5G'
+	option closed '0'
+	option auth_mode 'psk'
+	option wpa_mode '2'
+	option crypto 'aes'
+	option wpa_psk ''
+	option channel '0'
+	option gmode '5'
+	option HT_BW '2'
+	option TxPower '100'

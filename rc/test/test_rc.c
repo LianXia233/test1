@@ -9,6 +9,7 @@
  * 运行: make test
  */
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include "padavan_service.h"
 #include "nvram_linux.h"
@@ -124,14 +125,35 @@ static void test_dispatch_errors(void)
 }
 
 /* ---- nvram 开关门控（M2 libnvram 联动） ---- */
-#define TEST_CFG "/home/marvis/Marvis/User/3CBAC8107E73429435739CCBD26C293F/workspace/conv_d42fda146033434cbb3992e05dc7068f/temp/padavan_rc_test.kv"
-#define TEST_TMP "/home/marvis/Marvis/User/3CBAC8107E73429435739CCBD26C293F/workspace/conv_d42fda146033434cbb3992e05dc7068f/temp/padavan_rc_test.tmp"
+/* 配置路径在运行时生成，避免硬编码系统路径（跨平台：优先 TMPDIR，回退 /tmp） */
+static char g_cfg[256];
+static char g_tmp[256];
+
+static void make_temp_paths(void)
+{
+	const char *base = getenv("TMPDIR");
+	char tmpl[256];
+
+	if (!base || !*base)
+		base = "/tmp";
+
+	snprintf(tmpl, sizeof(tmpl), "%s/padavan_rc_testXXXXXX", base);
+	{
+		char *d = mkdtemp(tmpl);   /* POSIX；Windows 侧测试不参与构建 */
+		if (d)
+			base = d;
+	}
+
+	snprintf(g_cfg, sizeof(g_cfg), "%s/padavan_rc_test.kv", base);
+	snprintf(g_tmp, sizeof(g_tmp), "%s/padavan_rc_test.tmp", base);
+}
 
 static void test_nvram_gate(void)
 {
 	int rc;
 
-	nvram_set_config_file(TEST_CFG, TEST_TMP);
+	make_temp_paths();
+	nvram_set_config_file(g_cfg, g_tmp);
 	/* 预置：wan 禁用 */
 	CHECK(nvram_set("wan_enable", "0") == 0, "nvram_set wan_enable=0");
 	nvram_commit();

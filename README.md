@@ -11,7 +11,7 @@
 |---|---|---|
 | M1/M2 libnvram | 已完成 | 配置层复刻，API 兼容 `nvram_linux.h`，26 用例全过 |
 | M3 rc-ng | 骨架完成 | 声明式服务注册表 + notify 分发 + 依赖编排，32 项测试全过 |
-| M4 luci-app | 待启动 | 管理界面层复刻 |
+| M4 luci-app | 首屏完成 | 管理界面层：系统状态 / 网络 / 无线三页，113 项测试全过 |
 
 ## 目录结构
 
@@ -19,16 +19,25 @@
 padavan-rewrite/
 ├── docs/                  # 设计文档与适配报告
 │   ├── 重写架构设计.md
+│   ├── 进度说明与要求.md
 │   └── AirPi_AP3000M_适配评估报告.html
 ├── libnvram/              # M1/M2 配置层（API 兼容 nvram_linux.h）
 │   ├── include/           # 公共头文件
 │   ├── src/               # nvram_core / nvram_uci / nvram_uci_cli
 │   └── test/              # 测试用例 + fake_uci 桩
-└── rc/                    # M3 服务层（rc-ng 骨架）
-    ├── include/           # padavan_service.h
-    ├── init.d/            # procd init 脚本
-    ├── src/               # service_registry / notify_bus / main
-    └── test/              # test_rc.c
+├── rc/                    # M3 服务层（rc-ng 骨架）
+│   ├── include/           # padavan_service.h
+│   ├── init.d/            # procd init 脚本
+│   ├── src/               # service_registry / notify_bus / main
+│   └── test/              # test_rc.c
+└── luci-app-padavan/      # M4 管理界面层（LuCI 模块）
+    ├── luasrc/
+    │   ├── controller/    # 菜单与路由
+    │   ├── model/cbi/     # 网络页 / 无线页
+    │   ├── view/          # 系统状态页
+    │   └── padavan/       # map / apply / status / wifi（纯 Lua，可单测）
+    ├── root/              # 默认 UCI 配置 + rpcd ACL
+    └── test/              # run.sh（Lua 单测）/ lint.sh（语法 + LF）
 ```
 
 ## 快速构建
@@ -44,6 +53,10 @@ make -C libnvram WITH_UCI=1
 # 构建 rc-ng（依赖 libnvram）
 make -C rc
 make -C rc test
+
+# luci-app-padavan 本地测试（需 Lua 5.1；luac 可选）
+make -C luci-app-padavan test
+make -C luci-app-padavan lint
 ```
 
 ## 设计要点
@@ -52,6 +65,9 @@ make -C rc test
 - **配置可迁移**：老毛子 nvram 变量表可一键导入导出 UCI
 - **标准基座**：内核/BSP/无线/加速全部走 ImmortalWrt 主线
 - **渐进式重写**：配置层 → 服务层 → 界面层 → 应用包，逐层替换验证
+- **界面与后端同源**：LuCI 页面写 UCI 的落点与 libnvram 的 `section_key → padavan.section.key`
+  命名映射共用同一份规则；无线页编辑 `padavan.rt/wl` 后同步到原生 `wireless`，保证
+  `nvram get wl_ssid` 等老毛子语义不变
 
 详见 [docs/重写架构设计.md](docs/重写架构设计.md)。
 

@@ -8,3 +8,6 @@ rc-ng
 # 临时文件
 *.tmp
 *~
+
+# IDE / 工具内部产物（不归档）
+.trae-html-share-packages/

@@ -1,0 +1,30 @@
+{
+	"luci-app-padavan": {
+		"description": "Grant access to Padavan (rt-n56u) rewrite",
+		"read": {
+			"ubus": {
+				"padavan": [ "*" ],
+				"network.interface": [ "dump", "status" ],
+				"system": [ "info", "board" ]
+			},
+			"uci": [ "padavan", "wireless", "network" ],
+			"file": {
+				"/etc/config/padavan": [ "read" ],
+				"/proc/stat": [ "read" ],
+				"/proc/meminfo": [ "read" ],
+				"/proc/uptime": [ "read" ],
+				"/proc/loadavg": [ "read" ]
+			}
+		},
+		"write": {
+			"ubus": {
+				"padavan": [ "notify" ]
+			},
+			"uci": [ "padavan", "wireless" ],
+			"file": {
+				"/etc/config/padavan": [ "write" ],
+				"/etc/config/wireless": [ "write" ]
+			}
+		}
+	}
+}

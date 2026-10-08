@@ -27,17 +27,28 @@ AIGC:
   - 服务：wan / firewall / dnsmasq / upnp / pptp
   - nvram 开关门控（如 `wan_enable`），禁用时跳过本体但级联照常
   - 32 项测试全部通过
+- **M4 luci-app-padavan 管理界面层（首屏）**：LuCI 模块复刻老毛子管理界面
+  - 模块骨架：`Makefile`（包定义 + 本地 test/lint）、默认 UCI 配置、rpcd ACL
+  - `map.lua`：nvram↔UCI 命名映射（与 libnvram 严格对齐）、字段目录、加密/频宽归一化、校验
+  - `apply.lua`：作用域化保存生效（ubus notify + `network reload` / `wifi reload`）
+  - `status.lua`：`/proc` + ubus 系统状态采集（纯函数、数据源可注入）
+  - `wifi.lua`：`padavan.rt/wl` ↔ OpenWrt `/etc/config/wireless` 幂等双向同步
+  - 页面：系统状态页（2 秒轮询）、网络页（WAN/LAN/DHCP）、无线页（2.4G/5G）
+  - 测试：`test/run.sh` 113 项单测全过；`test/lint.sh` 语法 + 强制 LF 行尾全过
 - **文档**：重写架构设计（v0.1 原型阶段）、AirPi AP3000M 适配评估报告
 - **本仓库初始化**：代码推送到 GitHub 归档（测试仓库，可能不落地）
 
 ### 变更
-- 无
+- 架构文档 UCI schema 章节改为与实现一致的 `misc/wan/lan/dhcp/rt/wl` 段结构
+- 架构文档事件总线动作名统一为 `ubus call padavan notify`（与 `notify_bus.c`/`apply.lua` 一致）
 
 ### 修复
-- 无
+- 修正 `network.lua` 中把 Lua 保留字 `end` 用作 DHCP 字段表键导致的语法错误（改为 `["end"]`）
+- 补全 rpcd ACL：`/proc/loadavg` 读权限、`ubus padavan notify` 与 `/etc/config/wireless` 写权限
 
 ### 已知限制
 - 原型阶段，未经生产环境验证
 - libuci 后端需 OpenWrt SDK 环境编译
-- M4 LuCI 管理界面层尚未启动
+- M4 仅覆盖首屏三页，USB / QoS / VPN / DDNS / 5G 页面随 M5 补齐
+
 *（内容由AI生成，仅供参考）*
