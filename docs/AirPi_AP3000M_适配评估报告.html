@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AirPi AP3000M（MT7981B）Padavan 重写适配评估报告</title>
+<style>
+  :root {
+    --bg: #0f172a;
+    --panel: #1e293b;
+    --panel2: #334155;
+    --text: #e2e8f0;
+    --muted: #94a3b8;
+    --accent: #38bdf8;
+    --ok: #4ade80;
+    --warn: #facc15;
+    --bad: #f87171;
+    --border: #475569;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, "PingFang SC", "Microsoft YaHei", "Segoe UI", sans-serif;
+    line-height: 1.7;
+    padding: 2rem 1rem;
+  }
+  .wrap { max-width: 1100px; margin: 0 auto; }
+  header {
+    background: linear-gradient(135deg, #0ea5e9 0%, #6366f1 100%);
+    border-radius: 16px;
+    padding: 2rem 2.5rem;
+    color: #fff;
+    margin-bottom: 2rem;
+  }
+  header h1 { font-size: 1.8rem; margin-bottom: .5rem; }
+  header .meta { font-size: .9rem; opacity: .9; }
+  h2 {
+    font-size: 1.35rem;
+    margin: 2.5rem 0 1rem;
+    padding-left: .8rem;
+    border-left: 5px solid var(--accent);
+  }
+  h3 { font-size: 1.05rem; margin: 1.5rem 0 .6rem; color: var(--accent); }
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.2rem 1.5rem;
+    margin-bottom: 1rem;
+  }
+  table { width: 100%; border-collapse: collapse; margin: .8rem 0; }
+  th, td { text-align: left; padding: .55rem .8rem; border-bottom: 1px solid var(--border); font-size: .92rem; }
+  th { color: var(--accent); background: var(--panel2); }
+  code {
+    background: #0b1220;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: .1em .4em;
+    font-family: "JetBrains Mono", Consolas, monospace;
+    font-size: .88em;
+  }
+  pre {
+    background: #0b1220;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem;
+    overflow-x: auto;
+    font-size: .85rem;
+    line-height: 1.5;
+  }
+  pre code { border: none; background: none; padding: 0; }
+  .tag { display: inline-block; padding: .15rem .6rem; border-radius: 999px; font-size: .78rem; margin-right: .3rem; }
+  .ok { background: rgba(74,222,128,.15); color: var(--ok); }
+  .warn { background: rgba(250,204,21,.15); color: var(--warn); }
+  .bad { background: rgba(248,113,113,.15); color: var(--bad); }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1rem; }
+  .metric { text-align: center; }
+  .metric .num { font-size: 1.7rem; font-weight: 700; color: var(--accent); }
+  .metric .lbl { font-size: .8rem; color: var(--muted); }
+  footer { margin-top: 3rem; padding-top: 1.5rem; border-top: 1px solid var(--border); color: var(--muted); font-size: .85rem; }
+  details { margin: .5rem 0; }
+  summary { cursor: pointer; color: var(--accent); font-weight: 600; }
+  .flow { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; margin: 1rem 0; }
+  .flow .node { background: var(--panel2); border: 1px solid var(--border); padding: .5rem 1rem; border-radius: 8px; font-size: .85rem; }
+  .flow .arrow { color: var(--accent); }
+  @media (max-width: 640px) { header h1 { font-size: 1.3rem; } body { padding: 1rem .5rem; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <h1>AirPi AP3000M（MT7981B）Padavan 重写适配评估报告</h1>
+  <div class="meta">生成日期：2026-10-08 · 数据来源：ImmortalWrt dts（mt7981b-airpi-ap3000m.dts）· OpenWrt 官方 commit · 上游参照：hanwckf/rt-n56u 重写方案</div>
+</header>
+
+<!-- 1. 机型概述 -->
+<h2>1. 机型概述与硬件画像</h2>
+<div class="card">
+  <div class="grid">
+    <div class="metric"><div class="num">MT7981B</div><div class="lbl">SoC（双核 Cortex-A53）</div></div>
+    <div class="metric"><div class="num">1GB</div><div class="lbl">DDR4 RAM</div></div>
+    <div class="metric"><div class="num">8/16GB</div><div class="lbl">eMMC 存储</div></div>
+    <div class="metric"><div class="num">2.5G+1G</div><div class="lbl">以太网（LAN+WAN）</div></div>
+  </div>
+  <table>
+    <tr><th>维度</th><th>规格</th><th>dts / 来源依据</th></tr>
+    <tr><td>SoC</td><td>MediaTek MT7981B（Filogic 820，双核 A53）</td><td>compatible "mediatek,mt7981"</td></tr>
+    <tr><td>内存</td><td>1GB DDR4（0x40000000 = 1GB）</td><td><code>memory reg = &lt;0 0x40000000 0 0x40000000&gt;</code></td></tr>
+    <tr><td>存储</td><td>8GB / 16GB eMMC（8-bit bus）</td><td><code>&amp;mmc0</code> bus-width=8, max-freq 52MHz</td></tr>
+    <tr><td>LAN</td><td>1× 2.5GbE（Realtek PHY，C45）</td><td><code>gmac0</code> 2500base-x, <code>phy1</code> ethernet-phy@1</td></tr>
+    <tr><td>WAN</td><td>1× 1GbE（内置 PHY）</td><td><code>gmac1</code> gmii, <code>int_gbe_phy</code></td></tr>
+    <tr><td>无线</td><td>2.4GHz + 5GHz 802.11ax（MT7976）</td><td><code>&amp;wifi</code> + eeprom_factory_0（mmcblk0p2 工厂分区）</td></tr>
+    <tr><td>按键</td><td>Reset（PIO1）、WPS（PIO0）</td><td>gpio-keys</td></tr>
+    <tr><td>LED</td><td>系统蓝（PIO13）、2.4G（PIO34）、5G（PIO35）</td><td>gpio-leds, phy0tpt/phy1tpt 触发</td></tr>
+    <tr><td>散热</td><td>PWM 温控风扇</td><td><code>&amp;fan</code> pwms &lt;&amp;pwm 2 40000 0&gt;</td></tr>
+    <tr><td>扩展</td><td>USB 3.0（xhci，5V vbus）+ M.2 5G modem 槽</td><td><code>&amp;xhci</code> vbus-supply reg_5v</td></tr>
+    <tr><td>串口</td><td>UART0 115200n8</td><td>chosen stdout-path</td></tr>
+  </table>
+</div>
+
+<!-- 2. 官方支持状态 -->
+<h2>2. 官方支持状态</h2>
+<div class="card">
+  <p><span class="tag ok">OpenWrt 官方</span> 2026-01-20 已合入支持（PR #21397 / #21601，作者 Fil Dunsky），dts 位于 <code>target/linux/mediatek/dts/mt7981b-airpi-ap3000m.dts</code>。</p>
+  <p><span class="tag ok">ImmortalWrt</span> master 同步维护该 dts（用户提供链接即官方仓库 master 分支）。</p>
+  <p><span class="tag ok">社区配套</span> 已有 luci-app-airpi3000m-fancontrol（LuCI 风扇控制 + Rust 温控守护 + airpi-gpio-fan 内核驱动，LianXia233 维护）。</p>
+  <p><span class="tag warn">注意</span> 原厂固件 factory 分区（mmcblk0p2）为空，刷机前需写入 EEPROM：<code>dd if=/lib/firmware/MT7981_iPAiLNA_EEPROM.bin of=/dev/mmcblk0p2 bs=4k count=1</code>，否则无线校准失效。</p>
+</div>
+
+<!-- 3. 适配方案 -->
+<h2>3. Padavan 重写适配方案（分层）</h2>
+<div class="flow">
+  <div class="node">系统基座<br>ImmortalWrt mediatek/filogic</div><span class="arrow">→</span>
+  <div class="node">配置层<br>libnvram（文件/UCI 双后端）</div><span class="arrow">→</span>
+  <div class="node">服务层<br>rc-ng（procd 编排）</div><span class="arrow">→</span>
+  <div class="node">界面层<br>luci-app-padavan</div><span class="arrow">→</span>
+  <div class="node">应用包<br>QoS/USB/VPN/DDNS</div>
+</div>
+<div class="card">
+  <h3>3.1 内核 / BSP（P0，已有官方支持）</h3>
+  <ul>
+    <li>直接采用 ImmortalWrt <code>mediatek/filogic</code> target 现有 dts 与驱动，无需自行移植</li>
+    <li>板型 overlay：GPIO/LED 已定义；PWM 风扇驱动（airpi-gpio-fan）作为补丁并入内核包</li>
+    <li>eMMC 引导：blob/ATF + U-Boot web 刷机流程保持官方链路</li>
+  </ul>
+  <h3>3.2 配置层（P0，libnvram 原型已交付）</h3>
+  <ul>
+    <li>持久配置：<code>/etc/config/padavan</code>（UCI 后端）；Debian/裸机环境自动回退文件 KV 后端</li>
+    <li>nvram API 兼容：老毛子插件直接链接 libnvram 无需改代码</li>
+    <li>eMMC 上的配置可靠性高于老毛子 MTD nvram：无分区磨损问题</li>
+  </ul>
+  <h3>3.3 服务层（P1，rc-ng）</h3>
+  <ul>
+    <li>老毛子 rc 常驻主循环 → procd init 脚本（wan / firewall / dnsmasq / usb 首批）</li>
+    <li>notify_rc → ubus 事件总线</li>
+  </ul>
+  <h3>3.4 界面层（P2，luci-app-padavan）</h3>
+  <ul>
+    <li>复刻老毛子核心页面；本机已有 luci-app-airpi3000m-fancontrol 可并入</li>
+  </ul>
+</div>
+
+<!-- 4. 关键适配点 -->
+<h2>4. 关键适配点详表</h2>
+<div class="card">
+  <table>
+    <tr><th>适配项</th><th>Padavan 老体系</th><th>AirPi AP3000M 适配方案</th><th>难度</th></tr>
+    <tr><td>配置存储</td><td>MTD nvram 分区</td><td>eMMC + UCI（libnvram 双后端）</td><td><span class="tag ok">低</span></td></tr>
+    <tr><td>以太网</td><td>rt_ppe + MT7621 内置 switch</td><td>DSA + mtk_ppe；gmac0 接 Realtek 2.5G PHY（C45），gmac1 内置 1G PHY</td><td><span class="tag warn">中</span></td></tr>
+    <tr><td>无线</td><td>rt_wifi 闭源（MT7620/21）</td><td>mt76 / MTK hybrid（MT7976）+ factory EEPROM</td><td><span class="tag warn">中</span></td></tr>
+    <tr><td>硬件加速</td><td>rt_ppe</td><td>mtk_ppe + hnat（OpenWrt 主线）</td><td><span class="tag ok">低</span></td></tr>
+    <tr><td>存储/USB</td><td>ntfs-3g / usb 挂载脚本</td><td>blockd + kmod-fs 生态；xhci 5V vbus</td><td><span class="tag ok">低</span></td></tr>
+    <tr><td>风扇控制</td><td>无（老毛子无此机型）</td><td>airpi-gpio-fan + Rust 温控守护（已有）</td><td><span class="tag ok">低</span></td></tr>
+    <tr><td>5G modem（M.2）</td><td>usb_modem 脚本</td><td>modemmanager / qmi-wwan 包</td><td><span class="tag warn">中</span></td></tr>
+    <tr><td>MAC 地址</td><td>nvram 出厂值</td><td>macaddr_generate_from_mmc_cid（官方方案）</td><td><span class="tag ok">低</span></td></tr>
+    <tr><td>刷机</td><td>breed/uboot web</td><td>U-Boot web（192.168.88.1）官方链路</td><td><span class="tag ok">低</span></td></tr>
+    <tr><td>温控/电源</td><td>—</td><td>reg_3p3v / reg_5v 固定稳压器已定义</td><td><span class="tag ok">低</span></td></tr>
+  </table>
+</div>
+
+<!-- 5. 工作分解 -->
+<h2>5. 适配工作分解与里程碑</h2>
+<div class="card">
+  <table>
+    <tr><th>里程碑</th><th>内容</th><th>产出</th></tr>
+    <tr><td>M1（已完成）</td><td>重写架构设计 + libnvram 文件后端原型 + rc 服务骨架</td><td>docs/重写架构设计.md · libnvram（API 兼容）</td></tr>
+    <tr><td>M2</td><td>libnvram UCI 后端 + defaults 表自动生成 + nvram CLI 兼容</td><td>nvram get/set/show/commit 在 AP3000M 可跑</td></tr>
+    <tr><td>M3</td><td>rc-ng 首批服务（wan/firewall/dnsmasq）+ notify→ubus 桥</td><td>AP3000M 网络全链路跑通</td></tr>
+    <tr><td>M4</td><td>luci-app-padavan 首屏（状态/网络/无线/风扇）</td><td>Web 管理界面</td></tr>
+    <tr><td>M5</td><td>USB 存储、QoS、VPN、DDNS、5G modem 应用包</td><td>功能完备固件镜像</td></tr>
+  </table>
+</div>
+
+<!-- 6. 风险 -->
+<h2>6. 风险与缓解</h2>
+<div class="card">
+  <table>
+    <tr><th>风险</th><th>等级</th><th>缓解措施</th></tr>
+    <tr><td>2.5G PHY（Realtek C45）驱动在主线内核的稳定性</td><td><span class="tag warn">中</span></td><td>锁定官方支持 commit；跟进 mtk_eth 与 rtl phy 补丁更新；实测吞吐/回退</td></tr>
+    <tr><td>MT7976 无线驱动与主线内核耦合</td><td><span class="tag warn">中</span></td><td>跟随 MTK WiFi feed 版本；升级内核时同步升级驱动</td></tr>
+    <tr><td>factory 分区 EEPROM 缺失导致无线异常</td><td><span class="tag warn">中</span></td><td>刷机流程强制写 EEPROM；固件启动自检 nvmem 有效性</td></tr>
+    <tr><td>老毛子插件对 nvram 私有语义的依赖</td><td><span class="tag ok">低</span></td><td>libnvram API 兼容 + defaults 表保底</td></tr>
+    <tr><td>M.2 5G modem 模组兼容性（qmi/rgmii 变体）</td><td><span class="tag warn">中</span></td><td>按实际模组选用 qmi-wwan/rgmii 方案，预留 pcie 引脚 overlay</td></tr>
+  </table>
+</div>
+
+<!-- 7. 结论 -->
+<h2>7. 结论</h2>
+<div class="card">
+  <p>AirPi AP3000M 是 Padavan 重写方案的<b>理想首发机型</b>：官方 OpenWrt/ImmortalWrt 支持已合入，硬件画像与老毛子传统功能（USB 存储、VPN、QoS、5G modem）高度契合，且社区已有风扇控制等配套。适配路径清晰：<b>基座零移植 → libnvram 配置层 → rc-ng 服务层 → luci-app-padavan 界面层</b>，全程无需触碰老 MIPS 代码。</p>
+  <p>建议下一步：在 AP3000M 上编译验证 libnvram 原型（UCI 后端），随后推进 M3 网络链路里程碑。</p>
+</div>
+
+<footer>
+  报告生成：Marvis · 依据 mt7981b-airpi-ap3000m.dts（ImmortalWrt master）与 OpenWrt 官方支持公告 · 上游设计文档：docs/重写架构设计.md
+</footer>
+
+</div>
+</body>
+</html>

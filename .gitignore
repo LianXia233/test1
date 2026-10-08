@@ -1,0 +1,10 @@
+# 编译产物
+*.o
+*.a
+test_nvram
+test_rc
+rc-ng
+
+# 临时文件
+*.tmp
+*~
